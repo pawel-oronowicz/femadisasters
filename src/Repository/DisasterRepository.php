@@ -4,6 +4,8 @@ namespace App\Repository;
 
 use App\Entity\Disaster;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -16,9 +18,35 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class DisasterRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    private EntityManagerInterface $em;
+
+    public function __construct(
+        ManagerRegistry $registry,
+        EntityManagerInterface $entityManager
+    )
     {
         parent::__construct($registry, Disaster::class);
+        $this->em = $entityManager;
+    }
+
+    /**
+     * Returns ID of the latest Disaster entry
+     *
+     * @return int
+     * @throws NonUniqueResultException
+     */
+    public function findLatestDisasterNumber(): int
+    {
+        $disaster = $this->createQueryBuilder('d')
+            ->orderBy('d.disasterNumber', 'DESC')
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        if($disaster) {
+            return $disaster->getDisasterNumber();
+        } else {
+            return 0;
+        }
     }
 
 //    /**
